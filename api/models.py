@@ -1,6 +1,5 @@
 from django.db import models
-
-
+from django.contrib.auth.models import User
 
 class Book(models.Model):
     Title = models.CharField(max_length=32,null=False,blank=False)
@@ -11,3 +10,10 @@ class Book(models.Model):
 
     def __str__(self) -> str:
         return self.Title
+
+class Library(models.Model):
+    user = models.OneToOneField(User,on_delete=models.CASCADE)
+    books = models.ManyToManyField(Book)
+
+    def __str__(self) -> str:
+        return f"{self.user.username}'s Library"

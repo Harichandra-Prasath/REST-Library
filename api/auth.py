@@ -6,8 +6,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from .exceptions import noTokenException,invalidTokenException,invalidRoleException
 
 class UserAuthentication(BaseAuthentication):
-    def __init__(self,role) -> None:
-        self.role = role
+    def __init__(self) -> None:
+        pass
     
     def authenticate(self, request):
         

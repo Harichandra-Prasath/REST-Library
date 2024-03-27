@@ -6,18 +6,19 @@ from .exceptions import keyErrorException,noObjectException
 from django.core.exceptions import ObjectDoesNotExist,ValidationError
 from .utils import encode_jwt
 from django.db import IntegrityError
-from .models import Book
+from .models import Book,Library
 from django.http import JsonResponse
 from .serializers import BookSerializer
 from .auth import UserAuthentication
 
 @api_view(["GET","POST"])
-#@authentication_classes(UserAuthentication)
+@authentication_classes([UserAuthentication])
 def ListandCreateHandler(request):
 
+    user = request.user
 
     if request.method=="GET":
-        books = Book.objects.all()
+        books = Library.objects.get(user=user).books.all()
         serializer = BookSerializer(books,many=True)
         return JsonResponse(serializer.data,safe=False)
     
@@ -25,15 +26,21 @@ def ListandCreateHandler(request):
         data = request.data
         serializer = BookSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            book = serializer.save()
+
+            # add it to library
+            Library.objects.get(user=user).books.add(book)
+
             return JsonResponse(serializer.data,status=201)
         return JsonResponse(serializer.error_messages,status=400)
 
 @api_view(["GET","DELETE","PUT"])
+@authentication_classes([UserAuthentication])
 def RetrieveUpdateDeleteHandler(request,isbn):
+    user = request.user
 
     try:
-        _book = Book.objects.get(ISBN=isbn)
+        _book = Library.objects.get(user=user).books.get(ISBN=isbn)
     except ObjectDoesNotExist:
         raise noObjectException(model="book")
     
@@ -78,6 +85,9 @@ def RegisterHandler(request):
         _user = User(username=Username)
         _user.set_password(Password)
         _user.save()
+
+        #create a library for the user
+        Library.objects.create(user=_user)
 
     except IntegrityError as e:
         return Response({"detail":str(e.__cause__)},status=400)

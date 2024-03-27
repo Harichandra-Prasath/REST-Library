@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from ..models import Book
+from ..models import Book,Library
 from django.urls import reverse
 import json
 
@@ -14,7 +14,26 @@ class BookTestCase(TestCase):
         )
         book.save()
 
+        user = User(
+            username="Tester",
+        )
+        user.set_password("Test123")
+        user.save()
+
+        library = Library(
+            user=user
+        )
+        library.save()
+        library.books.add(book)
+        
+
+        
+        
+
     def test_list_books(self):
+
+        self.client.post(reverse("login"),{"Username":"Tester","Password":"Test123"},content_type="application/json")
+        
         _response = self.client.get(reverse('listandcreate'))
 
         expected_response = [{
@@ -24,12 +43,11 @@ class BookTestCase(TestCase):
             "Publication_Date":None,
             "Description":None
         }]
-
         self.assertEqual(_response.status_code,200)
         self.assertEqual(json.loads(_response.content),expected_response)
 
     def test_create_book(self):
-        
+        self.client.post(reverse("login"),{"Username":"Tester","Password":"Test123"},content_type="application/json")
         post_data = {
             "ISBN":"1234123412341",
             "Title":"Test1",
@@ -40,6 +58,8 @@ class BookTestCase(TestCase):
         self.assertEqual(_response.status_code,201)
 
     def test_retrieve_book(self):
+        self.client.post(reverse("login"),{"Username":"Tester","Password":"Test123"},content_type="application/json")
+
         _response = self.client.get(reverse('retrieveupdatedelete',kwargs={'isbn':"1234567890123"}))
 
         expected_response = {
@@ -54,6 +74,8 @@ class BookTestCase(TestCase):
         self.assertEqual(json.loads(_response.content),expected_response)
     
     def test_update_book(self):
+        self.client.post(reverse("login"),{"Username":"Tester","Password":"Test123"},content_type="application/json")
+
         put_data = {
             "ISBN":"1212121212121",
             "Title":"Updated_Test",
@@ -74,6 +96,8 @@ class BookTestCase(TestCase):
 
     
     def test_delete_book(self):
+        self.client.post(reverse("login"),{"Username":"Tester","Password":"Test123"},content_type="application/json")
+
         _response = self.client.delete(reverse('retrieveupdatedelete',kwargs={'isbn':'1234567890123'}))
         self.assertEqual(_response.status_code,204)
         self.assertEqual(Book.objects.count(),0)
