@@ -1,11 +1,57 @@
 import datetime
 from django.contrib.auth.models import User
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,authentication_classes
 from .exceptions import keyErrorException,noObjectException
 from django.core.exceptions import ObjectDoesNotExist,ValidationError
 from .utils import encode_jwt
 from django.db import IntegrityError
+from .models import Book
+from django.http import JsonResponse
+from .serializers import BookSerializer
+from .auth import UserAuthentication
+
+@api_view(["GET","POST"])
+#@authentication_classes(UserAuthentication)
+def ListandCreateHandler(request):
+
+
+    if request.method=="GET":
+        books = Book.objects.all()
+        serializer = BookSerializer(books,many=True)
+        return JsonResponse(serializer.data,safe=False)
+    
+    else:
+        data = request.data
+        serializer = BookSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data,status=201)
+        return JsonResponse(serializer.error_messages,status=400)
+
+@api_view(["GET","DELETE","PUT"])
+def RetrieveUpdateDeleteHandler(request,isbn):
+
+    try:
+        _book = Book.objects.get(ISBN=isbn)
+    except ObjectDoesNotExist:
+        raise noObjectException(model="book")
+    
+    if request.method=="GET":
+        serializer = BookSerializer(_book)
+        return JsonResponse(serializer.data,status=200)
+    
+    elif request.method=="PUT":
+        data = request.data
+        serializer = BookSerializer(_book,data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data,status=201)
+        return JsonResponse(serializer.error_messages,status=400)
+    
+    else:
+        _book.delete()
+        return Response({},status=204)
 
 
 @api_view(["POST"])

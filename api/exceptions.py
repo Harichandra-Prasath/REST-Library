@@ -7,10 +7,14 @@ class keyErrorException(APIException):
 
 class noObjectException(APIException):
 
-    def __init__(self, detail=None, code=None):
+    def __init__(self, detail=None, code=None,model=None):
         # use for authentication exceptions
-        self.detail = "Invalid Credentials"
-        self.status_code = 401
+        if model:
+            self.detail = f"Requested {model} not found in the library"
+            self.status_code = 404
+        else:
+            self.detail = "Invalid Credentials"
+            self.status_code = 401
 
 class noTokenException(APIException):
     

@@ -1,17 +1,14 @@
 from typing import Any
 from rest_framework.authentication import BaseAuthentication
 from .utils import decode_jwt
-from .models import User
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from .exceptions import noTokenException,invalidTokenException,invalidRoleException
 
-class roleAuthentication(BaseAuthentication):
+class UserAuthentication(BaseAuthentication):
     def __init__(self,role) -> None:
         self.role = role
     
-    def __call__(self) -> Any:
-        return self
-
     def authenticate(self, request):
         
         jwt_token = request.COOKIES.get("jwt","")
